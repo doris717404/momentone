@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentone - Carpe diem, one moment at a time.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #F0EBE3;
+            --bg-panel: #F7F3ED;
+            --accent: #FF8822;
+            --text-primary: #2C2C2C;
+            --text-secondary: #666;
+            --border: #DDD6CB;
+            --radius: 12px;
+            --radius-pill: 999px;
+        }
+
+        body {
+            font-family: 'Special Elite', 'PingFang SC', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            letter-spacing: 0.02em;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: normal;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn {
+            padding: 7px 18px;
+            border-radius: var(--radius-pill);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--text-primary);
+        }
+
+        .header-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .header-btn-primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .header-btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 24px;
+        }
+
+        /* Canvas Area */
+        .canvas-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 16px;
+        }
+
+        #mainCanvas {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+            width: auto;
+            height: auto;
+        }
+
+        .canvas-placeholder {
+            width: 240px;
+            height: 320px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .canvas-placeholder.hidden {
+            display: none;
+        }
+
+        .upload-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .upload-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            width: 360px;
+            flex-shrink: 0;
+        }
+
+        .panel-card {
+            background: var(--bg-panel);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: var(--radius-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .tab.active {
+            background: white;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255,255,255,0.5);
+        }
+
+
+        /* Sub Tabs */
+        .sub-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .sub-tab {
+            flex: 1;
+            padding: 7px 10px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--border);
+            background: white;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .sub-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .sub-tab:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .sub-tab-content {
+            display: none;
+        }
+
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-family: inherit;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 40px;
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Presets */
+        .presets {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .preset-btn {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: white;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Color Picker */
+        .color-section {
+            margin-bottom: 16px;
+        }
+
+        .color-mode-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .color-mode-tab {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: white;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-mode-tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-input {
+            width: 50px;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        .color-hex {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* Extracted Colors */
+        .extracted-colors {
+            margin-top: 12px;
+        }
+
+        .extracted-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-swatch {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: var(--accent);
+        }
+
+        .color-swatch.selected-for-text {
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .checkbox-item label {
+            flex: 1;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .element-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px var(--border);
+        }
+
+        /* Time Options Sub-checkboxes */
+        .time-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-left: 28px;
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+        }
+
+        .time-option-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .time-option-item input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--accent);
+        }
+
+        .time-option-item label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Emoji Input */
+        .emoji-inputs {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .emoji-btn {
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-size: 20px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .emoji-btn:hover {
+            border-color: var(--accent);
+        }
+
+        /* Mood Text Input */
+        .mood-text-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .mood-text {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .random-slogan-btn {
+            padding: 10px 12px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .random-slogan-btn:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Gradient Controls */
+        .gradient-colors {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .gradient-stop {
+            flex: 1;
+        }
+
+        .gradient-direction {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .direction-wheel {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .direction-indicator {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border: 2px solid var(--text-primary);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Emoji Picker Popup */
+        .emoji-picker-popup {
+            position: absolute;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            display: none;
+            max-width: 280px;
+        }
+
+        .emoji-picker-popup.show {
+            display: block;
+        }
+
+        .emoji-categories {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .emoji-category {
+            padding: 6px 10px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .emoji-category:hover,
+        .emoji-category.active {
+            background: var(--bg-panel);
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .emoji-item {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .emoji-item:hover {
+            background: var(--bg-panel);
+        }
+
+        .emoji-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .emoji-input-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            /* Full-height app layout: header + canvas + panel, no scroll */
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .header {
+                padding: 4px 12px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .header p {
+                font-size: 8px;
+            }
+
+            .header-left {
+                gap: 4px;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+
+            .header-btn {
+                padding: 5px 16px;
+                font-size: 12px;
+                border-radius: var(--radius-pill);
+                white-space: nowrap;
+            }
+
+            .main-container {
+                flex-direction: column;
+                padding: 8px 10px;
+                gap: 4px;
+                height: calc(100vh - 38px);
+                overflow: hidden;
+            }
+
+            /* Canvas section: fixed height, never changes when switching tabs */
+            .canvas-section {
+                flex: none;
+                height: 48vh;
+                min-height: 48vh;
+                max-height: 48vh;
+                overflow: visible;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .canvas-section.has-image {
+                overflow: hidden;
+            }
+
+            .canvas-wrapper {
+                padding: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: auto;
+                height: 100%;
+                max-height: 100%;
+            }
+
+            .canvas-section:not(.has-image) .canvas-wrapper {
+                width: auto;
+                height: auto;
+                margin: 0 auto;
+            }
+
+            .canvas-section.has-image .canvas-wrapper {
+                height: 100%;
+            }
+
+            #mainCanvas {
+                max-width: 100%;
+                max-height: 100%;
+                width: auto;
+                height: auto;
+            }
+
+            .canvas-placeholder {
+                width: auto;
+                height: auto;
+                padding: 20px 30px;
+                gap: 6px;
+                font-size: 11px;
+            }
+
+            .canvas-placeholder .upload-btn {
+                padding: 8px 18px;
+                font-size: 12px;
+            }
+
+            /* Control panel: fills remaining space, scrolls independently */
+            .control-panel {
+                width: 100%;
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 8px;
+            }
+
+            .panel-card {
+                padding: 10px;
+                margin-bottom: 6px;
+            }
+
+            .tabs {
+                margin-bottom: 6px;
+                padding-bottom: 6px;
+                position: sticky;
+                top: 0;
+                background: var(--bg-primary);
+                z-index: 10;
+            }
+
+            .tab {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .sub-tabs {
+                margin-bottom: 6px;
+                position: sticky;
+                top: 38px;
+                background: var(--bg-primary);
+                z-index: 9;
+                padding-bottom: 4px;
+            }
+
+            .sub-tab {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+
+            .panel-title {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+
+            .form-input,
+            .form-select {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .checkbox-item {
+                padding: 8px;
+            }
+
+            .checkbox-item label {
+                font-size: 12px;
+            }
+
+            .time-options {
+                padding: 8px;
+                gap: 6px;
+            }
+
+            .time-option-item {
+                font-size: 11px;
+            }
+
+            .mood-text {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+
+            .color-mode-tabs {
+                gap: 6px;
+            }
+
+            .color-mode-tab {
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .preset-btn {
+                padding: 5px 8px;
+                font-size: 10px;
+            }
+
+            .slider-value {
+                font-size: 11px;
+            }
+
+            .form-label {
+                font-size: 11px;
+            }
+
+            .extracted-label {
+                font-size: 10px;
+            }
+
+            .color-swatch {
+                width: 30px;
+                height: 30px;
+            }
+
+            /* Emoji picker mobile friendly */
+            .emoji-picker-popup {
+                position: fixed;
+                left: 10px !important;
+                right: 10px;
+                bottom: 10px !important;
+                top: auto !important;
+                max-width: none;
+                border-radius: var(--radius);
+            }
+
+            /* Color picker mobile friendly */
+            .color-picker-popup {
+                position: fixed;
+                left: 10px !important;
+                right: 10px;
+                bottom: 10px !important;
+                top: auto !important;
+                min-width: auto;
+                border-radius: var(--radius);
+            }
+        }
+
+        /* Hidden file input */
+        #fileInput {
+            display: none;
+        }
+
+        /* Text color picker popup */
+        .color-picker-popup {
+            position: absolute;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            display: none;
+            min-width: 200px;
+        }
+
+        .color-picker-popup.show {
+            display: block;
+        }
+
+        .popup-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .popup-colors {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .popup-color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .popup-color-swatch:hover {
+            border-color: var(--accent);
+        }
+
+        .hex-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .hex-input-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .eyedropper-btn {
+            padding: 8px 12px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        
+
+        /* EXIF info display */
+        .exif-info {
+            font-size: 10px;
+            color: var(--accent);
+            margin-left: 28px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <h1>Momentone</h1>
+            <p>Carpe diem, one moment at a time.</p>
+        </div>
+        <div class="header-actions" id="headerActions" style="display: none;">
+            <button class="header-btn" onclick="document.getElementById('fileInput').click()">上传</button>
+            <button class="header-btn header-btn-primary" onclick="exportImage()">下载</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Canvas Section -->
+        <section class="canvas-section">
+            <div class="canvas-wrapper">
+                <div class="canvas-placeholder" id="placeholder">
+                    <span>请上传图片</span>
+                    <span>请记录瞬间</span>
+                    <span style="font-size: 1.2em;">(. ❛ ᴗ ❛.)つ📸</span>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择照片</button>
+                </div>
+                <canvas id="mainCanvas" style="display: none;"></canvas>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <aside class="control-panel" id="controlPanel" style="display: none;">
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchMainTab('elements')">此刻</button>
+                <button class="tab" onclick="switchMainTab('layout')">布局</button>
+                <button class="tab" onclick="switchMainTab('background')">底图</button>
+            </div>
+
+            <!-- Layout Tab -->
+            <div class="tab-content" id="layoutTab">
+                <div class="panel-card">
+                    <h3 class="panel-title">拼接方式</h3>
+                    <select class="form-select" id="layoutOrder" onchange="updateLayout()">
+                        <option value="card-top">色卡在上</option>
+                        <option value="card-bottom">色卡在下</option>
+                    </select>
+                </div>
+
+                <div class="panel-card">
+                    <h3 class="panel-title">占比调整</h3>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="ratioSlider" min="20" max="80" value="50" step="5" oninput="updateRatio(this.value)">
+                        <span class="slider-value" id="ratioValue">50%</span>
+                    </div>
+                    <div class="presets">
+                        <button class="preset-btn" onclick="setRatio(25)">1:3</button>
+                        <button class="preset-btn" onclick="setRatio(50)">1:1</button>
+                        <button class="preset-btn" onclick="setRatio(75)">3:1</button>
+                    </div>
+                </div>
+
+                
+            </div>
+
+
+            <!-- Elements Tab -->
+            <div class="tab-content active" id="elementsTab">
+                <!-- Sub Tabs -->
+                <div class="sub-tabs">
+                    <button class="sub-tab active" onclick="switchSubTab('time', this)">⌛️所处</button>
+                    <button class="sub-tab" onclick="switchSubTab('location', this)">📍所在</button>
+                    <button class="sub-tab" onclick="switchSubTab('emojiMood', this)">💭所想</button>
+                </div>
+
+                <!-- Time Sub Tab -->
+                <div class="sub-tab-content active" id="timeSubTab">
+                    <div class="panel-card">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showTime" checked onchange="toggleTimeOptions()">
+                            <label for="showTime">时间</label>
+                            <div class="element-controls">
+                                <div class="color-dot" id="timeColor" style="background: #2C2C2C;" onclick="openColorPicker('time')"></div>
+                            </div>
+                        </div>
+                        <div class="time-options" id="timeOptions" style="margin-left: 0; margin-top: 12px;">
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showYear" checked onchange="updateCanvas()">
+                                <label for="showYear">年</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showMonth" checked onchange="updateCanvas()">
+                                <label for="showMonth">月</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showDay" checked onchange="updateCanvas()">
+                                <label for="showDay">日</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showHourMinute" checked onchange="updateCanvas()">
+                                <label for="showHourMinute">时分</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="timeInputGroup" style="margin-top: 12px;">
+                            <input type="datetime-local" class="form-input" id="timeInput" oninput="updateCanvas()">
+                        </div>
+                        <div class="exif-info" id="timeExifInfo"></div>
+                    </div>
+                </div>
+
+                <!-- Location Sub Tab -->
+                <div class="sub-tab-content" id="locationSubTab">
+                    <div class="panel-card">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showLocation" checked onchange="updateCanvas()">
+                            <label for="showLocation">地点</label>
+                            <div class="element-controls">
+                                <div class="color-dot" id="locationColor" style="background: #2C2C2C;" onclick="openColorPicker('location')"></div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 12px;">
+                            <input type="text" class="form-input" id="locationInput" placeholder="somewhere" oninput="updateCanvas()">
+                        </div>
+                        <div class="exif-info" id="locationExifInfo"></div>
+                    </div>
+                </div>
+
+                <!-- Emoji + Mood Sub Tab -->
+                <div class="sub-tab-content" id="emojiMoodSubTab">
+                    <div class="panel-card">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showEmoji" checked onchange="updateCanvas()">
+                            <label for="showEmoji">Emoji</label>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div class="emoji-inputs">
+                                <div class="emoji-btn" id="emojiBtn" onclick="openEmojiPicker()">🥰</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showMood" checked onchange="updateCanvas()">
+                            <label for="showMood">moment</label>
+                            <div class="element-controls">
+                                <input type="color" class="color-input" id="moodColorPicker" value="#2C2C2C" onchange="onMoodColorPick(this.value)" style="width: 28px; height: 28px; padding: 1px; border-radius: 6px;">
+                                <div class="color-dot" id="moodColor" style="background: #2C2C2C;" onclick="openColorPicker('mood')"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div class="mood-text-container">
+                                <input type="text" class="mood-text" id="moodText" placeholder="Click the dice for a random quote..." maxlength="50" oninput="updateCanvas()">
+                                <button class="random-slogan-btn" onclick="setRandomSlogan()" title="随机生成">🎲</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Background Tab -->
+            <div class="tab-content" id="backgroundTab">
+                <div class="panel-card">
+                    <h3 class="panel-title">底图模式</h3>
+                    <div class="color-mode-tabs">
+                        <button class="color-mode-tab active" id="solidTab" onclick="setBgMode('solid')">纯色</button>
+                        <button class="color-mode-tab" id="gradientTab" onclick="setBgMode('gradient')">渐变</button>
+                    </div>
+
+                    <!-- Solid Color Controls -->
+                    <div id="solidControls">
+                        <div class="color-picker-wrapper">
+                            <input type="color" class="color-input" id="solidColor" onchange="updateBackground()">
+                            <input type="text" class="color-hex" id="solidColorHex" placeholder="#EAE5D5" maxlength="7" onchange="updateSolidColorFromHex()">
+                        </div>
+                    </div>
+
+                    <!-- Gradient Controls -->
+                    <div id="gradientControls" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">渐变类型</label>
+                            <select class="form-select" id="gradientType" onchange="updateBackground()">
+                                <option value="linear">线性渐变</option>
+                                <option value="radial">径向渐变</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">方向 (角度)</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="gradientAngle" min="0" max="360" value="0" oninput="updateBackground()">
+                                <span class="slider-value" id="angleValue">0°</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">渐变颜色</label>
+                            <div class="gradient-colors">
+                                <div class="gradient-stop">
+                                    <input type="color" class="color-input" style="width: 100%;" id="gradientColor1" onchange="updateBackground()">
+                                </div>
+                                <div class="gradient-stop">
+                                    <input type="color" class="color-input" style="width: 100%;" id="gradientColor2" onchange="updateBackground()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Colors -->
+                    <div class="extracted-colors">
+                        <div class="extracted-label">从图片提取的主色</div>
+                        <div class="color-palette" id="colorPalette">
+                            <!-- Dynamic color swatches -->
+                        </div>
+                    </div>
+
+                    <button class="preset-btn" style="width: 100%; margin-top: 12px;" onclick="resetToExtracted()">恢复自动提取</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Emoji Picker Popup -->
+    <div class="emoji-picker-popup" id="emojiPickerPopup">
+        <div class="emoji-categories">
+            <button class="emoji-category active" onclick="switchEmojiCategory('smileys', this)">😀</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('nature', this)">🌿</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('food', this)">🍎</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('travel', this)">✈️</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('activities', this)">⚽</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('objects', this)">💡</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('symbols', this)">❤️</button>
+        </div>
+        <div class="emoji-grid" id="emojiGrid">
+            <!-- Dynamic emoji items -->
+        </div>
+        <div class="emoji-input-row">
+            <input type="text" id="customEmojiInput" placeholder="输入emoji..." maxlength="2">
+            <button class="eyedropper-btn" onclick="setCustomEmoji()">使用</button>
+        </div>
+    </div>
+
+    <!-- Color Picker Popup -->
+    <div class="color-picker-popup" id="colorPickerPopup">
+        <div class="popup-title">选择文字颜色</div>
+        <div class="popup-colors" id="popupColors"></div>
+        <div class="hex-input-row">
+            <input type="text" id="popupHexInput" placeholder="#RRGGBB" maxlength="7">
+            <button class="eyedropper-btn" onclick="startEyedropper()">吸管</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/heic" onchange="handleFileSelect(event)">
+
+    <script>
+        // State
+        let state = {
+            image: null,
+            extractedColors: [],
+            layoutOrder: 'card-top',
+            cardRatio: 50,
+            bgMode: 'solid',
+            solidColor: '#EAE5D5',
+            gradientColors: ['#EAE5D5', '#D4CFC0'],
+            gradientType: 'linear',
+            gradientAngle: 0,
+            showTime: true,
+            showLocation: true,
+            showEmoji: true,
+            showMood: true,
+            timeOptions: {
+                year: true,
+                month: true,
+                day: true,
+                hourMinute: true
+            },
+            timeColor: null,
+            locationColor: null,
+            emojiColor: null,
+            moodColor: null,
+            manualColors: {
+                time: false,
+                location: false,
+                emoji: false,
+                mood: false
+            },
+            currentColorElement: null,
+            // Image position for drag with boundary constraints
+            imageOffset: { x: 0, y: 0 },
+            isDragging: false,
+            dragStart: { x: 0, y: 0 },
+            currentEmoji: '🥰',
+            isPortrait: false,
+            exifData: {
+                dateTime: null,
+                gps: null
+            }
+        };
+
+        // Canvas dimensions
+        // Dynamic canvas dimensions based on layout
+        function getCanvasDimensions() {
+            const isHorizontal = (state.layoutOrder === 'card-left' || state.layoutOrder === 'card-right');
+            if (isHorizontal) {
+                return { width: 2880, height: 2160 };  // landscape 4:3
+            } else {
+                return { width: 1080, height: 1440 };  // portrait 3:4
+            }
+        }
+        // Keep constants for backward compat (will be overridden in functions)
+        let CANVAS_WIDTH = 1080;
+        let CANVAS_HEIGHT = 1440;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default time to now
+            const now = new Date();
+            const timeString = now.toISOString().slice(0, 16);
+            document.getElementById('timeInput').value = timeString;
+
+            // Initialize emoji picker
+            renderEmojiGrid('smileys');
+
+            // Setup canvas drag events
+            setupCanvasDrag();
+        });
+
+        // File handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 20 * 1024 * 1024) {
+                showToast('图片大小不能超过 20MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.image = img;
+                    state.imageOffset = { x: 0, y: 0 };
+                    state.exifData = { dateTime: null, gps: null };
+                    document.getElementById('locationInput').value = 'somewhere';
+                    extractExifData(file);
+                    processImage();
+                    showCanvas();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Extract EXIF data
+        function extractExifData(file) {
+            EXIF.getData(file, function() {
+                const dateTimeOriginal = EXIF.getTag(this, 'DateTimeOriginal');
+                const dateTime = EXIF.getTag(this, 'DateTime');
+                const dateTimeDigitized = EXIF.getTag(this, 'DateTimeDigitized');
+                const exifDateStr = dateTimeOriginal || dateTime || dateTimeDigitized;
+                
+                let exifTimeFound = false;
+                if (exifDateStr) {
+                    const parts = exifDateStr.split(' ');
+                    if (parts.length === 2) {
+                        const datePart = parts[0].replace(/:/g, '-');
+                        const timePart = parts[1];
+                        const isoString = `${datePart}T${timePart}`;
+                        const date = new Date(isoString);
+                        if (!isNaN(date.getTime())) {
+                            state.exifData.dateTime = date;
+                            document.getElementById('timeInput').value = date.toISOString().slice(0, 16);
+                            document.getElementById('timeExifInfo').textContent = '已读取图片拍摄时间';
+                            exifTimeFound = true;
+                        }
+                    }
+                }
+                
+                // Fallback: no EXIF time found, use current time
+                if (!exifTimeFound) {
+                    const now = new Date();
+                    document.getElementById('timeInput').value = now.toISOString().slice(0, 16);
+                    document.getElementById('timeExifInfo').textContent = '未读取到拍摄时间，已使用当前时间';
+                }
+
+                const lat = EXIF.getTag(this, 'GPSLatitude');
+                const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                const lon = EXIF.getTag(this, 'GPSLongitude');
+                const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+                if (lat && lon) {
+                    const latitude = convertDMSToDD(lat, latRef);
+                    const longitude = convertDMSToDD(lon, lonRef);
+                    state.exifData.gps = { lat: latitude, lon: longitude };
+                    document.getElementById('locationExifInfo').textContent = `GPS: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+                    // Reverse geocode to get location name
+                    reverseGeocode(latitude, longitude);
+                }
+            });
+        }
+
+
+        // Reverse geocode GPS to location name
+        async function reverseGeocode(lat, lon) {
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=en`);
+                if (!resp.ok) throw new Error('Network error');
+                const data = await resp.json();
+                
+                let locationName = '';
+                const addr = data.address || {};
+                
+                // Build a clean short location: city/town + country
+                const place = addr.city || addr.town || addr.village || addr.county || addr.suburb || addr.state || '';
+                const country = addr.country || '';
+                
+                if (place && country) {
+                    locationName = `${place}, ${country}`;
+                } else if (place) {
+                    locationName = place;
+                } else if (country) {
+                    locationName = country;
+                }
+                
+                if (locationName) {
+                    document.getElementById('locationInput').value = locationName;
+                    document.getElementById('locationExifInfo').textContent = `GPS: ${lat.toFixed(2)}, ${lon.toFixed(2)} → ${locationName}`;
+                    updateCanvas();
+                } else {
+                    document.getElementById('locationInput').value = 'somewhere';
+                    updateCanvas();
+                }
+            } catch (e) {
+                // Fallback: keep "somewhere"
+                console.log('Reverse geocode failed:', e);
+                document.getElementById('locationInput').value = 'somewhere';
+                updateCanvas();
+            }
+        }
+
+        function convertDMSToDD(dms, ref) {
+            let dd = dms[0] + dms[1] / 60 + dms[2] / 3600;
+            if (ref === 'S' || ref === 'W') {
+                dd = -dd;
+            }
+            return dd;
+        }
+
+        function showCanvas() {
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('mainCanvas').style.display = 'block';
+            document.querySelector('.canvas-section').classList.add('has-image');
+            document.getElementById('headerActions').style.display = 'flex';
+            document.getElementById('controlPanel').style.display = 'block';
+        }
+
+        function processImage() {
+            // Detect portrait (height > width)
+            state.isPortrait = state.image.height > state.image.width;
+            updateLayoutOptions();
+            
+            state.extractedColors = extractDominantColors(state.image, 5);
+            
+            if (state.extractedColors.length > 0) {
+                state.solidColor = state.extractedColors[0];
+                state.gradientColors = [state.extractedColors[0], state.extractedColors[1] || state.extractedColors[0]];
+                document.getElementById('solidColor').value = state.solidColor;
+                document.getElementById('solidColorHex').value = state.solidColor;
+                document.getElementById('gradientColor1').value = state.gradientColors[0];
+                document.getElementById('gradientColor2').value = state.gradientColors[1];
+            }
+
+            updateColorPalette();
+
+            state.currentEmoji = '🥰';
+            document.getElementById('emojiBtn').textContent = state.currentEmoji;
+
+            setRandomSlogan();
+            calculateAutoTextColors();
+            updateCanvas();
+        }
+
+        // Random slogan
+        function setRandomSlogan() {
+            const slogans = [
+                "Carpe diem, seize the day.",
+                "Live in the moment.",
+                "Every moment matters.",
+                "This too shall pass.",
+                "Collect beautiful moments.",
+                "Life is short, art is long.",
+                "Stay wild, moon child.",
+                "Chasing light and shadows.",
+                "Wander often, wonder always.",
+                "Find beauty in ordinary.",
+                "Breathe deep, live fully.",
+                "Grow through what you go through.",
+                "Bloom where you are planted.",
+                "Be here now.",
+                "Small steps, big changes.",
+                "Let it be.",
+                "Choose joy today.",
+                "Embrace the journey.",
+                "Sunshine is a state of mind.",
+                "Progress, not perfection.",
+                "Just breathe.",
+                "Keep going, keep growing.",
+                "Less is more.",
+                "Be your own light.",
+                "Slow down and enjoy.",
+                "One day at a time.",
+                "Still I rise.",
+                "Do what makes you alive.",
+                "Life is now.",
+                "Begin anywhere.",
+                "Stay curious, stay kind.",
+                "Enjoy the little things.",
+                "Create your own sunshine.",
+                "Dream without fear.",
+                "Love the life you live.",
+                "Make it happen.",
+                "Today is a gift.",
+                "Stars can't shine without darkness.",
+                "Feel the fear, do it anyway.",
+                "You are enough.",
+            "Miss you now.",
+            "Be your sunshine.",
+            "Per aspera ad astra.",
+            "In this world, concrete flowers grow."
+            ];
+            const randomIndex = Math.floor(Math.random() * slogans.length);
+            document.getElementById('moodText').value = slogans[randomIndex];
+            updateCanvas();
+        }
+
+        // K-Means color extraction
+        function extractDominantColors(img, k) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const maxSize = 150;
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imageData.data;
+            
+            const samples = [];
+            const sampleRate = 4;
+            for (let i = 0; i < pixels.length; i += 4 * sampleRate) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const a = pixels[i + 3];
+                
+                if (a > 128) {
+                    samples.push([r, g, b]);
+                }
+            }
+            
+            if (samples.length === 0) return ['#EAE5D5', '#D4CFC0', '#C4BFB0', '#B4AFA0', '#A49F90'];
+            
+            let centroids = [];
+            for (let i = 0; i < k; i++) {
+                centroids.push(samples[Math.floor(Math.random() * samples.length)]);
+            }
+            
+            for (let iter = 0; iter < 10; iter++) {
+                const clusters = Array(k).fill(null).map(() => []);
+                
+                for (const pixel of samples) {
+                    let minDist = Infinity;
+                    let closest = 0;
+                    
+                    for (let i = 0; i < k; i++) {
+                        const dist = colorDistance(pixel, centroids[i]);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closest = i;
+                        }
+                    }
+                    
+                    clusters[closest].push(pixel);
+                }
+                
+                for (let i = 0; i < k; i++) {
+                    if (clusters[i].length > 0) {
+                        centroids[i] = averageColor(clusters[i]);
+                    }
+                }
+            }
+            
+            const clusterSizes = Array(k).fill(null).map((_, i) => {
+                const cluster = [];
+                for (const pixel of samples) {
+                    let minDist = Infinity;
+                    let closest = 0;
+                    
+                    for (let j = 0; j < k; j++) {
+                        const dist = colorDistance(pixel, centroids[j]);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closest = j;
+                        }
+                    }
+                    
+                    if (closest === i) cluster.push(pixel);
+                }
+                return { color: centroids[i], size: cluster.length };
+            });
+            
+            clusterSizes.sort((a, b) => b.size - a.size);
+            
+            return clusterSizes.map(c => rgbToHex(c.color));
+        }
+
+        function colorDistance(c1, c2) {
+            const dr = c1[0] - c2[0];
+            const dg = c1[1] - c2[1];
+            const db = c1[2] - c2[2];
+            return dr * dr + dg * dg + db * db;
+        }
+
+        function averageColor(colors) {
+            let r = 0, g = 0, b = 0;
+            for (const c of colors) {
+                r += c[0];
+                g += c[1];
+                b += c[2];
+            }
+            return [
+                Math.round(r / colors.length),
+                Math.round(g / colors.length),
+                Math.round(b / colors.length)
+            ];
+        }
+
+        function rgbToHex(rgb) {
+            return '#' + rgb.map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? [
+                parseInt(result[1], 16),
+                parseInt(result[2], 16),
+                parseInt(result[3], 16)
+            ] : [0, 0, 0];
+        }
+
+        function updateColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.innerHTML = '';
+            
+            state.extractedColors.forEach((color) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.onclick = () => selectExtractedColor(color);
+                palette.appendChild(swatch);
+            });
+        }
+
+        function selectExtractedColor(color) {
+            if (state.bgMode === 'solid') {
+                state.solidColor = color;
+                document.getElementById('solidColor').value = color;
+                document.getElementById('solidColorHex').value = color;
+            } else {
+                state.gradientColors[0] = color;
+                document.getElementById('gradientColor1').value = color;
+            }
+            updateBackground();
+        }
+
+        // Canvas drag with boundary constraints
+        function setupCanvasDrag() { /* disabled */ }
+
+        // Calculate constrained offset to prevent blank areas
+        function calculateConstrainedOffset(x, y) { return { x: 0, y: 0 }; }
+
+        function resetImagePosition() { /* disabled */ }
+
+        function toggleTimeOptions() {
+            const showTime = document.getElementById('showTime').checked;
+            document.getElementById('timeOptions').style.display = showTime ? 'flex' : 'none';
+            document.getElementById('timeInputGroup').style.display = showTime ? 'block' : 'none';
+            updateCanvas();
+        }
+
+        function formatTimeByOptions(date) {
+            const showYear = document.getElementById('showYear').checked;
+            const showMonth = document.getElementById('showMonth').checked;
+            const showDay = document.getElementById('showDay').checked;
+            const showHourMinute = document.getElementById('showHourMinute').checked;
+            
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            let parts = [];
+            
+            if (showYear) parts.push(year);
+            if (showMonth) parts.push(month);
+            if (showDay) parts.push(day);
+            
+            let dateStr = parts.join('.');
+            let timeStr = '';
+            
+            if (showHourMinute) {
+                timeStr = `${displayHours}:${minutes} ${ampm}`;
+            }
+            
+            if (dateStr && timeStr) {
+                return `${dateStr} ${timeStr}`;
+            } else if (dateStr) {
+                return dateStr;
+            } else if (timeStr) {
+                return timeStr;
+            } else {
+                return '';
+            }
+        }
+
+        function updateCanvas() {
+            if (!state.image) return;
+            
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const dims = getCanvasDimensions();
+            CANVAS_WIDTH = dims.width;
+            CANVAS_HEIGHT = dims.height;
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+            
+            const isHorizontal = (state.layoutOrder === 'card-left' || state.layoutOrder === 'card-right');
+            
+            let cardRect, imgRect;
+            
+            if (isHorizontal) {
+                // Horizontal: card on left or right
+                const cardWidth = Math.round(CANVAS_WIDTH * state.cardRatio / 100);
+                const imageWidth = CANVAS_WIDTH - cardWidth;
+                
+                if (state.layoutOrder === 'card-left') {
+                    cardRect = { x: 0, y: 0, w: cardWidth, h: CANVAS_HEIGHT };
+                    imgRect = { x: cardWidth, y: 0, w: imageWidth, h: CANVAS_HEIGHT };
+                } else {
+                    cardRect = { x: imageWidth, y: 0, w: cardWidth, h: CANVAS_HEIGHT };
+                    imgRect = { x: 0, y: 0, w: imageWidth, h: CANVAS_HEIGHT };
+                }
+            } else {
+                // Vertical: card on top or bottom
+                const cardHeight = Math.round(CANVAS_HEIGHT * state.cardRatio / 100);
+                const imageHeight = CANVAS_HEIGHT - cardHeight;
+                
+                if (state.layoutOrder === 'card-top') {
+                    cardRect = { x: 0, y: 0, w: CANVAS_WIDTH, h: cardHeight };
+                    imgRect = { x: 0, y: cardHeight, w: CANVAS_WIDTH, h: imageHeight };
+                } else {
+                    cardRect = { x: 0, y: imageHeight, w: CANVAS_WIDTH, h: cardHeight };
+                    imgRect = { x: 0, y: 0, w: CANVAS_WIDTH, h: imageHeight };
+                }
+            }
+            
+            // Draw background
+            if (state.bgMode === 'solid') {
+                ctx.fillStyle = state.solidColor;
+                ctx.fillRect(cardRect.x, cardRect.y, cardRect.w, cardRect.h);
+            } else {
+                const cx = cardRect.x + cardRect.w / 2;
+                const cy = cardRect.y + cardRect.h / 2;
+                const gradient = state.gradientType === 'linear'
+                    ? ctx.createLinearGradient(cardRect.x, cardRect.y,
+                        cardRect.x + Math.sin(state.gradientAngle * Math.PI / 180) * cardRect.w,
+                        cardRect.y + Math.cos(state.gradientAngle * Math.PI / 180) * cardRect.h)
+                    : ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(cardRect.w, cardRect.h));
+                
+                gradient.addColorStop(0, state.gradientColors[0]);
+                gradient.addColorStop(1, state.gradientColors[1]);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(cardRect.x, cardRect.y, cardRect.w, cardRect.h);
+            }
+            
+            // Draw text in card area
+            drawTextElements(ctx, cardRect);
+            
+            // Draw image
+            drawImageCover(ctx, state.image, imgRect.x, imgRect.y, imgRect.w, imgRect.h);
+        }
+
+        function drawTextElements(ctx, cardRect) {
+            const elements = [];
+            
+            if (document.getElementById('showTime').checked) {
+                let date;
+                const timeVal = document.getElementById('timeInput').value;
+                date = timeVal ? new Date(timeVal) : new Date();
+                const timeStr = formatTimeByOptions(date);
+                if (timeStr) {
+                    elements.push({
+                        text: timeStr,
+                        color: state.timeColor || '#2C2C2C',
+                        type: 'time'
+                    });
+                }
+            }
+            
+            if (document.getElementById('showLocation').checked) {
+                let location = document.getElementById('locationInput').value;
+                if (!location && state.exifData.gps) {
+                    location = `GPS: ${state.exifData.gps.lat.toFixed(2)}, ${state.exifData.gps.lon.toFixed(2)}`;
+                }
+                if (!location) {
+                    location = 'somewhere';
+                }
+                elements.push({
+                    text: location,
+                    color: state.locationColor || '#2C2C2C',
+                    type: 'location'
+                });
+            }
+            
+            if (document.getElementById('showEmoji').checked && state.currentEmoji) {
+                elements.push({
+                    text: state.currentEmoji,
+                    color: state.emojiColor || '#2C2C2C',
+                    type: 'emoji',
+                    isEmoji: true
+                });
+            }
+            
+            if (document.getElementById('showMood').checked) {
+                const text = document.getElementById('moodText').value;
+                if (text && text.trim()) {
+                    elements.push({
+                        text: text,
+                        color: state.moodColor || '#2C2C2C',
+                        type: 'mood'
+                    });
+                }
+            }
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Use the smaller dimension for font sizing
+            const refSize = Math.min(cardRect.w, cardRect.h);
+            const centerX = cardRect.x + cardRect.w / 2;
+            const centerY = cardRect.y + cardRect.h / 2;
+            const lineHeight = cardRect.h / (elements.length + 3);
+            const startY = centerY - (elements.length - 1) * lineHeight / 2;
+            
+            elements.forEach((el, i) => {
+                ctx.fillStyle = el.color;
+                
+                if (el.isEmoji) {
+                    ctx.font = `normal ${Math.floor(refSize / 14)}px 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif`;
+                } else {
+                    // For horizontal layout with narrow card, use smaller font
+                    const fontSize = Math.floor(refSize / 23);
+                    ctx.font = `normal ${fontSize}px 'Special Elite', 'PingFang SC', sans-serif`;
+                }
+                
+                ctx.fillText(el.text, centerX, startY + i * lineHeight);
+            });
+        }
+
+        function drawImageCover(ctx, img, x, y, width, height) {
+            const imgRatio = img.width / img.height;
+            const targetRatio = width / height;
+            
+            let drawWidth, drawHeight, drawX, drawY;
+            
+            if (imgRatio > targetRatio) {
+                drawHeight = height;
+                drawWidth = height * imgRatio;
+                drawX = x + (width - drawWidth) / 2;
+                drawY = y;
+            } else {
+                drawWidth = width;
+                drawHeight = width / imgRatio;
+                drawX = x;
+                drawY = y + (height - drawHeight) / 2;
+            }
+            
+            drawX += state.imageOffset.x;
+            drawY += state.imageOffset.y;
+            
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        }
+
+        // Text color calculation
+        function calculateAutoTextColors() {
+            const bgColor = state.bgMode === 'solid' ? state.solidColor : getGradientAverageColor();
+            const bgRgb = hexToRgb(bgColor);
+            const bgLuminance = relativeLuminance(bgRgb);
+            
+            const isLightBg = bgLuminance > 0.5;
+            const harmoniousColor = getHarmoniousTextColor(bgColor, isLightBg);
+            
+            const harmoniousRgb = hexToRgb(harmoniousColor);
+            const harmoniousLum = relativeLuminance(harmoniousRgb);
+            const contrast = (Math.max(bgLuminance, harmoniousLum) + 0.05) / (Math.min(bgLuminance, harmoniousLum) + 0.05);
+            
+            let finalColor = harmoniousColor;
+            if (contrast < 2.5) {
+                finalColor = isLightBg ? '#2C2C2C' : '#F4F0E4';
+            }
+            
+            if (!state.manualColors.time) state.timeColor = finalColor;
+            if (!state.manualColors.location) state.locationColor = finalColor;
+            if (!state.manualColors.emoji) state.emojiColor = finalColor;
+            if (!state.manualColors.mood) state.moodColor = finalColor;
+            
+            updateColorDots();
+        }
+
+        function getGradientAverageColor() {
+            const c1 = hexToRgb(state.gradientColors[0]);
+            const c2 = hexToRgb(state.gradientColors[1]);
+            return rgbToHex([
+                Math.round((c1[0] + c2[0]) / 2),
+                Math.round((c1[1] + c2[1]) / 2),
+                Math.round((c1[2] + c2[2]) / 2)
+            ]);
+        }
+
+        function getHarmoniousTextColor(bgColor, isDarkOnLight) {
+            const bgRgb = hexToRgb(bgColor);
+            const [h, s, l] = rgbToHsl(bgRgb[0], bgRgb[1], bgRgb[2]);
+            
+            if (isDarkOnLight) {
+                const newL = Math.max(10, l - 50);
+                const newS = Math.min(100, s * 1.2);
+                const newRgb = hslToRgb(h, newS, newL);
+                return rgbToHex(newRgb);
+            } else {
+                const newL = Math.min(95, l + 50);
+                const newS = Math.min(100, s * 0.8);
+                const newRgb = hslToRgb(h, newS, newL);
+                return rgbToHex(newRgb);
+            }
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                    case g: h = ((b - r) / d + 2) / 6; break;
+                    case b: h = ((r - g) / d + 4) / 6; break;
+                }
+            }
+            return [h * 360, s * 100, l * 100];
+        }
+
+        function hslToRgb(h, s, l) {
+            h /= 360; s /= 100; l /= 100;
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g= hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        function relativeLuminance(rgb) {
+            const [r, g, b] = rgb.map(c => {
+                c = c / 255;
+                return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+
+        function updateColorDots() {
+            document.getElementById('timeColor').style.backgroundColor = state.timeColor;
+            document.getElementById('locationColor').style.backgroundColor = state.locationColor;
+                        document.getElementById('moodColor').style.backgroundColor = state.moodColor;
+            if (document.getElementById('moodColorPicker')) {
+                document.getElementById('moodColorPicker').value = state.moodColor || '#2C2C2C';
+            }
+        }
+
+
+        function switchSubTab(tab, btn) {
+            // Deactivate all sub tabs
+            document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sub-tab-content').forEach(t => t.classList.remove('active'));
+            
+            // Activate clicked
+            btn.classList.add('active');
+            document.getElementById(tab + 'SubTab').classList.add('active');
+        }
+
+        function switchMainTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+
+        function setBgMode(mode) {
+            state.bgMode = mode;
+            document.getElementById('solidTab').classList.toggle('active', mode === 'solid');
+            document.getElementById('gradientTab').classList.toggle('active', mode === 'gradient');
+            document.getElementById('solidControls').style.display = mode === 'solid' ? 'block' : 'none';
+            document.getElementById('gradientControls').style.display = mode === 'gradient' ? 'block' : 'none';
+            
+            calculateAutoTextColors();
+            updateCanvas();
+        }
+
+        function updateBackground() {
+            state.solidColor = document.getElementById('solidColor').value;
+            document.getElementById('solidColorHex').value = state.solidColor;
+            state.gradientColors[0] = document.getElementById('gradientColor1').value;
+            state.gradientColors[1] = document.getElementById('gradientColor2').value;
+            state.gradientType = document.getElementById('gradientType').value;
+            state.gradientAngle = parseInt(document.getElementById('gradientAngle').value);
+            document.getElementById('angleValue').textContent = state.gradientAngle + '°';
+            
+            calculateAutoTextColors();
+            updateCanvas();
+        }
+
+        function updateSolidColorFromHex() {
+            let hex = document.getElementById('solidColorHex').value;
+            if (!hex.startsWith('#')) hex = '#' + hex;
+            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+                state.solidColor = hex;
+                document.getElementById('solidColor').value = hex;
+                calculateAutoTextColors();
+                updateCanvas();
+            }
+        }
+
+
+        // Update layout dropdown based on image orientation
+        function updateLayoutOptions() {
+            const select = document.getElementById('layoutOrder');
+            select.innerHTML = '';
+            
+            if (state.isPortrait) {
+                select.innerHTML = `
+                    <option value="card-right">色卡在右</option>
+                    <option value="card-left">色卡在左</option>
+                    <option value="card-top">色卡在上</option>
+                    <option value="card-bottom">色卡在下</option>
+                `;
+                state.layoutOrder = 'card-right';
+            } else {
+                select.innerHTML = `
+                    <option value="card-top">色卡在上</option>
+                    <option value="card-bottom">色卡在下</option>
+                    <option value="card-left">色卡在左</option>
+                    <option value="card-right">色卡在右</option>
+                `;
+                state.layoutOrder = 'card-top';
+            }
+            select.value = state.layoutOrder;
+        }
+
+        function updateLayout() {
+            state.layoutOrder = document.getElementById('layoutOrder').value;
+            updateCanvas();
+        }
+
+        function updateRatio(value) {
+            state.cardRatio = parseInt(value);
+            document.getElementById('ratioValue').textContent = value + '%';
+            
+            if (value > 70 || value < 25) {
+                showToast('极端比例可能影响视觉效果');
+            }
+            
+            updateCanvas();
+        }
+
+        function setRatio(value) {
+            document.getElementById('ratioSlider').value = value;
+            updateRatio(value);
+        }
+
+        function resetToExtracted() {
+            if (state.extractedColors.length > 0) {
+                state.solidColor = state.extractedColors[0];
+                state.gradientColors = [state.extractedColors[0], state.extractedColors[1] || state.extractedColors[0]];
+                document.getElementById('solidColor').value = state.solidColor;
+                document.getElementById('solidColorHex').value = state.solidColor;
+                document.getElementById('gradientColor1').value = state.gradientColors[0];
+                document.getElementById('gradientColor2').value = state.gradientColors[1];
+                
+                state.manualColors = { time: false, location: false, emoji: false, mood: false };
+                calculateAutoTextColors();
+                updateCanvas();
+            }
+        }
+
+        // Emoji picker
+        function openEmojiPicker() {
+            const popup = document.getElementById('emojiPickerPopup');
+            const btn = document.getElementById('emojiBtn');
+            const rect = btn.getBoundingClientRect();
+            
+            popup.style.left = rect.left + 'px';
+            popup.style.top = (rect.bottom + 8) + 'px';
+            popup.classList.add('show');
+        }
+
+        function renderEmojiGrid(category) {
+            const grid = document.getElementById('emojiGrid');
+            grid.innerHTML = '';
+            
+            const emojiData = {
+                smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'],
+                nature: ['🌵', '🎄', '🌲', '🌳', '🌴', '🌱', '🌿', '☘️', '🍀', '🎍', '🎋', '🍃', '🍂', '🍁', '🍄', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', '🌚', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌙', '🌎', '🌍', '🌏', '🪐', '💫', '⭐', '🌟', '✨', '⚡', '🔥', '💥', '☄️', '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨', '🌪️', '🌫️', '🌈', '☔', '☂️', '💧', '💦', '🌊'],
+                food: ['🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🍍', '🥝', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🍄', '🥜', '🌰', '🍞', '🥐', '🥖', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🫔', '🥙', '🧆', '🥚', '🍳', '🥘', '🍲', '🫕', '🥣', '🥗', '🍿', '🧈', '🧂', '🥫', '🍱', '🍘', '🍙', '🍚', '🍛', '🍜', '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🍡', '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🫖', '🍵', '🍶', '🍾', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🥤', '🧋', '🧃', '🧉', '🧊'],
+                travel: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🦯', '🦽', '🦼', '🛴', '🚲', '🛵', '🏍️', '🛺', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '⚓', '⛽', '🚧', '🚦', '🚥', '🚏', '🗺️', '🗿', '🗽', '🗼', '🏰', '🏯', '🏟️', '🎡', '🎢', '🎠', '⛲', '⛱️', '🏖️', '🏝️', '🏜️', '🌋', '⛰️', '🏔️', '🗻', '🏕️', '⛺', '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', '🏩', '💒', '🏛️', '⛪', '🕌', '🛕', '🕍', '🕋', '⛩️', '🛤️', '🛣️', '🗾', '🎑', '🏞️', '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'],
+                activities: ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷', '⛸️', '🥌', '🎿', '⛷️', '🏂', '🪂', '🏋️', '🤼', '🤽', '🤾', '🌊', '🏄', '🏊', '🚣', '🧗', '🚵', '🚴', '🏇', '🥇', '🥈', '🥉', '🏆', '🏅', '🎖️', '🏵️', '🎗️', '🎫', '🎟️', '🎪', '🤹', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟️', '🎯', '🎳', '🎮', '🎰', '🧩'],
+                objects: ['⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🪔', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '🪙', '💰', '💳', '💎', '⚖️', '🧰', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🔩', '⚙️', '🧱', '⛓️', '🪝', '🛡️', '🔫', '💣', '🧨', '🔪', '🗡️', '⚔️', '🛡️', '🚬', '⚰️', '🪦', '⚱️', '🏺', '🔮', '📿', '🧿', '💈', '⚗️', '🔭', '🔬', '🕳️', '🩹', '🩺', '💊', '💉', '🩸', '🧬', '🦠', '🧫', '🧪', '🌡️', '🧹', '🧺', '🧻', '🚽', '🚰', '🚿', '🛁', '🛀', '🧼', '🪒', '🧽', '🧴', '🛎️', '🔑', '🗝️', '🚪', '🪑', '🛋️', '🛏️', '🛌', '🧸', '🖼️', '🪞', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🪄', '🪅', '🎊', '🎉', '🎎', '🏆', '🎐', '🪩', '🧧', '🎀', '🎑', '🎋', '🎍', '🎏', '🎐', '🎀', '✉️', '📩', '📨', '📧', '💌', '📥', '📤', '📦', '🏷️', '🪧', '📪', '📫', '📬', '📭', '📮', '📯', '📜', '📃', '📄', '📑', '🧾', '📊', '📈', '📉', '🗒️', '🗓️', '📆', '📅', '🗑️', '📇', '🗃️', '🗳️', '🗄️', '📋', '📁', '📂', '🗂️', '🗞️', '📰', '📓', '📔', '📒', '📕', '📗', '📘', '📙', '📚', '📖', '🔖', '🧷', '🔗', '📎', '🖇️', '📐', '📏', '🧮', '📌', '📍', '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝', '✏️', '🔍', '🔎', '🔏', '🔐', '🔒', '🔓'],
+                symbols: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉️', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚯', '🚳', '🚱', '🔞', '📵', '🚭', '❗', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🈳', '🈂', '🛂', '🛃', '🛄', '🛅', '🛗', '🚹', '🚺', '🚼', '⚧', '🚻', '🚮', '🎦', '📶', '🈁', '🔣', 'ℹ️', '🔤', '🔡', '🔠', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️', '⏸️', '⏯️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', '⏬', '◀️', '🔼', '🔽', '➡️', '⬅️', '⬆️', '⬇️', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '🔂', '🔄', '🔃', '🎵', '🎶', '➕', '➖', '➗', '✖️', '💲', '💱', '™️', '©️', '®️', '〰️', '➰', '➿', '🔚', '🔙', '🔛', '🔝', '🔜', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', '▫️', '◾', '◽', '◼️', '◻️', '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '⬛', '⬜', '🟫', '🔈', '🔇', '🔉', '🔊', '🔔', '🔕', '📣', '📢', '💬', '💭', '🗯️', '♠️', '♣️', '♥️', '♦️', '🃏', '🎴', '🀄', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛', '🕜', '🕝', '🕞', '🕟', '🕠', '🕡', '🕢', '🕣', '🕤', '🕥', '🕦', '🕧']
+            };
+            
+            const emojis = emojiData[category] || emojiData.smileys;
+            emojis.forEach(emoji => {
+                const item = document.createElement('div');
+                item.className = 'emoji-item';
+                item.textContent = emoji;
+                item.onclick = () => selectEmoji(emoji);
+                grid.appendChild(item);
+            });
+        }
+
+        function switchEmojiCategory(category, btn) {
+            document.querySelectorAll('.emoji-category').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            renderEmojiGrid(category);
+        }
+
+        function selectEmoji(emoji) {
+            state.currentEmoji = emoji;
+            document.getElementById('emojiBtn').textContent = emoji;
+            updateCanvas();
+            closeEmojiPicker();
+        }
+
+        function setCustomEmoji() {
+            const input = document.getElementById('customEmojiInput');
+            const emoji = input.value.trim();
+            if (emoji) {
+                selectEmoji(emoji);
+                input.value = '';
+            }
+        }
+
+        function closeEmojiPicker() {
+            document.getElementById('emojiPickerPopup').classList.remove('show');
+        }
+
+
+        // Direct color picker for moment text
+        function onMoodColorPick(color) {
+            state.moodColor = color;
+            state.manualColors.mood = true;
+            document.getElementById('moodColor').style.backgroundColor = color;
+            updateCanvas();
+        }
+
+        // Color picker
+        function openColorPicker(element) {
+            state.currentColorElement = element;
+            const popup = document.getElementById('colorPickerPopup');
+            const dot = document.getElementById(element + 'Color');
+            const rect = dot.getBoundingClientRect();
+            
+            popup.style.left = rect.left + 'px';
+            popup.style.top = (rect.bottom + 8) + 'px';
+            popup.classList.add('show');
+            
+            const colorsContainer = document.getElementById('popupColors');
+            colorsContainer.innerHTML = '';
+            
+            const allColors = [...state.extractedColors, '#FFFFFF', '#000000', '#2C2C2C', '#666666'];
+            allColors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'popup-color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.onclick = () => selectPopupColor(color);
+                colorsContainer.appendChild(swatch);
+            });
+            
+            document.getElementById('popupHexInput').value = '';
+        }
+
+        function selectPopupColor(color) {
+            if (state.currentColorElement) {
+                state[state.currentColorElement + 'Color'] = color;
+                state.manualColors[state.currentColorElement] = true;
+                updateColorDots();
+                updateCanvas();
+            }
+            closeColorPicker();
+        }
+
+        function startEyedropper() {
+            showToast('点击画布吸取颜色');
+            document.getElementById('colorPickerPopup').classList.remove('show');
+            
+            const canvas = document.getElementById('mainCanvas');
+            canvas.style.cursor = 'crosshair';
+            
+            canvas.onclick = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+                
+                const ctx = canvas.getContext('2d');
+                const pixel = ctx.getImageData(x, y, 1, 1).data;
+                const color = rgbToHex([pixel[0], pixel[1], pixel[2]]);
+                
+                selectPopupColor(color);
+                canvas.style.cursor = 'grab';
+                canvas.onclick = null;
+            };
+        }
+
+        function closeColorPicker() {
+            document.getElementById('colorPickerPopup').classList.remove('show');
+            state.currentColorElement = null;
+        }
+
+        // Close popups when clicking outside
+        document.addEventListener('click', (e) => {
+            const colorPopup = document.getElementById('colorPickerPopup');
+            const emojiPopup = document.getElementById('emojiPickerPopup');
+            
+            if (!colorPopup.contains(e.target) && !e.target.classList.contains('color-dot')) {
+                closeColorPicker();
+            }
+            
+            if (!emojiPopup.contains(e.target) && !e.target.closest('.emoji-btn') && !e.target.closest('#emojiBtn')) {
+                closeEmojiPicker();
+            }
+        });
+
+        // Export
+        function exportImage() {
+            const canvas = document.getElementById('mainCanvas');
+            const isHorizontal = (state.layoutOrder === 'card-left' || state.layoutOrder === 'card-right');
+            
+            const exportCanvas = document.createElement('canvas');
+            if (isHorizontal) {
+                exportCanvas.width = 2880;
+                exportCanvas.height = 2160;
+            } else {
+                exportCanvas.width = 2160;
+                exportCanvas.height = 2880;
+            }
+            
+            const ctx = exportCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+            
+            const fileName = `momentone_${Date.now()}.jpg`;
+            
+            // Detect mobile / iOS
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            
+            if (isMobile && navigator.share && navigator.canShare) {
+                // Mobile: use Web Share API to trigger native share sheet
+                exportCanvas.toBlob(async (blob) => {
+                    if (!blob) { showToast('导出失败'); return; }
+                    const file = new File([blob], fileName, { type: 'image/jpeg' });
+                    try {
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: 'Momentone',
+                            });
+                            showToast('照片保存成功');
+                        } else {
+                            // Fallback: open blob in new tab for long-press save
+                            openBlobInNewTab(exportCanvas);
+                        }
+                    } catch (err) {
+                        // User cancelled share or error
+                        if (err.name !== 'AbortError') {
+                            openBlobInNewTab(exportCanvas);
+                        }
+                    }
+                }, 'image/jpeg', 0.95);
+            } else if (isIOS) {
+                // iOS but no Web Share API support: open in new tab for long-press save
+                openBlobInNewTab(exportCanvas);
+            } else {
+                // Desktop: standard download
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = exportCanvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                showToast('照片保存成功');
+            }
+        }
+        
+        function openBlobInNewTab(canvas) {
+            canvas.toBlob((blob) => {
+                if (!blob) { showToast('导出失败'); return; }
+                const url = URL.createObjectURL(blob);
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    showToast('照片保存成功');
+                } else {
+                    // Popup blocked, fallback to direct download
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `momentone_${Date.now()}.jpg`;
+                    link.click();
+                    showToast('照片保存成功');
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        // Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
