@@ -1364,7 +1364,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Set default time to now
             const now = new Date();
-            const timeString = now.toISOString().slice(0, 16);
+            const timeString = toLocalDateTimeString(now);
             document.getElementById('timeInput').value = timeString;
 
             // Initialize emoji picker
@@ -1402,6 +1402,16 @@
         }
 
         // Extract EXIF data
+        // Format Date to local YYYY-MM-DDTHH:MM string (for datetime-local input)
+        function toLocalDateTimeString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            return `${y}-${m}-${d}T${hh}:${mm}`;
+        }
+
         function extractExifData(file) {
             EXIF.getData(file, function() {
                 const dateTimeOriginal = EXIF.getTag(this, 'DateTimeOriginal');
@@ -1409,27 +1419,44 @@
                 const dateTimeDigitized = EXIF.getTag(this, 'DateTimeDigitized');
                 const exifDateStr = dateTimeOriginal || dateTime || dateTimeDigitized;
                 
+                // Try to read timezone offset from EXIF (e.g. "+08:00")
+                const offsetOriginal = EXIF.getTag(this, 'OffsetTimeOriginal');
+                const offsetTime = EXIF.getTag(this, 'OffsetTime');
+                
                 let exifTimeFound = false;
                 if (exifDateStr) {
                     const parts = exifDateStr.split(' ');
                     if (parts.length === 2) {
                         const datePart = parts[0].replace(/:/g, '-');
-                        const timePart = parts[1];
-                        const isoString = `${datePart}T${timePart}`;
-                        const date = new Date(isoString);
-                        if (!isNaN(date.getTime())) {
-                            state.exifData.dateTime = date;
-                            document.getElementById('timeInput').value = date.toISOString().slice(0, 16);
-                            document.getElementById('timeExifInfo').textContent = '已读取图片拍摄时间';
+                        const timePart = parts[1].split('.')[0]; // Remove fractional seconds if any
+                        
+                        // EXIF DateTimeOriginal is the local time at the shooting location
+                        // datetime-local input expects YYYY-MM-DDTHH:MM format (no timezone)
+                        // So we use the EXIF string directly without timezone conversion
+                        const localTimeStr = `${datePart}T${timePart.substring(0, 5)}`;
+                        
+                        // Validate the date string
+                        const testDate = new Date(localTimeStr);
+                        if (!isNaN(testDate.getTime())) {
+                            state.exifData.dateTime = testDate;
+                            // Write directly to input — this IS the local shooting time
+                            document.getElementById('timeInput').value = localTimeStr;
+                            
+                            const tzInfo = offsetOriginal || offsetTime;
+                            if (tzInfo) {
+                                document.getElementById('timeExifInfo').textContent = `已读取拍摄时间 (${tzInfo})`;
+                            } else {
+                                document.getElementById('timeExifInfo').textContent = '已读取图片拍摄时间';
+                            }
                             exifTimeFound = true;
                         }
                     }
                 }
                 
-                // Fallback: no EXIF time found, use current time
+                // Fallback: no EXIF time found, use current local time
                 if (!exifTimeFound) {
                     const now = new Date();
-                    document.getElementById('timeInput').value = now.toISOString().slice(0, 16);
+                    document.getElementById('timeInput').value = toLocalDateTimeString(now);
                     document.getElementById('timeExifInfo').textContent = '未读取到拍摄时间，已使用当前时间';
                 }
 
