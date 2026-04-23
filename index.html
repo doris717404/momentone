@@ -1150,14 +1150,28 @@
                 <div class="sub-tab-content" id="locationSubTab">
                     <div class="panel-card">
                         <div class="checkbox-item">
-                            <input type="checkbox" id="showLocation" checked onchange="updateCanvas()">
+                            <input type="checkbox" id="showLocation" checked onchange="toggleLocationOptions()">
                             <label for="showLocation">地点</label>
                             <div class="element-controls">
                                 <div class="color-dot" id="locationColor" style="background: #2C2C2C;" onclick="openColorPicker('location')"></div>
                             </div>
                         </div>
-                        <div class="form-group" style="margin-top: 12px;">
-                            <input type="text" class="form-input" id="locationInput" placeholder="somewhere" oninput="updateCanvas()">
+                        <div class="time-options" id="locationLevelOptions" style="margin-left: 0; margin-top: 12px;">
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showDistrict" checked onchange="composeLocationFromLevels()"><label for="showDistrict">区</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showCity" checked onchange="composeLocationFromLevels()"><label for="showCity">市</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showProvince" onchange="composeLocationFromLevels()"><label for="showProvince">省</label>
+                            </div>
+                            <div class="time-option-item">
+                                <input type="checkbox" id="showCountry" onchange="composeLocationFromLevels()"><label for="showCountry">国家</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="locationInputGroup" style="margin-top: 12px;">
+                            <input type="text" class="form-input" id="locationInput" placeholder="somewhere" oninput="onLocationManualEdit()">
                         </div>
                         <div class="exif-info" id="locationExifInfo"></div>
                     </div>
@@ -1315,6 +1329,9 @@
             gradientRadius: 50,
             showTime: true,
             showLocation: true,
+            locationLevels: { district: true, city: true, province: false, country: false },
+            locationComponents: { district: '', city: '', province: '', country: '' },
+            locationManualEdit: false,
             showEmoji: true,
             showMood: true,
             timeOptions: {
@@ -1391,7 +1408,10 @@
                     state.image = img;
                     state.imageOffset = { x: 0, y: 0 };
                     state.exifData = { dateTime: null, gps: null };
+                    state.locationComponents = { district: '', city: '', province: '', country: '' };
+                    state.locationManualEdit = false;
                     document.getElementById('locationInput').value = 'somewhere';
+                    document.getElementById('locationExifInfo').textContent = '';
                     extractExifData(file);
                     processImage();
                     showCanvas();
@@ -1472,47 +1492,139 @@
                     document.getElementById('locationExifInfo').textContent = `GPS: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
                     // Reverse geocode to get location name
                     reverseGeocode(latitude, longitude);
+                } else {
+                    // No GPS data: reset location components, show fallback
+                    state.locationComponents = { district: '', city: '', province: '', country: '' };
+                    state.locationManualEdit = false;
+                    document.getElementById('locationInput').value = 'somewhere';
+                    document.getElementById('locationExifInfo').textContent = '未读取到位置信息';
+                    updateCanvas();
                 }
             });
         }
 
 
         // Reverse geocode GPS to location name
+        // Municipalities (直辖市): detected via ISO3166-2-lvl4 code
+        const MUNICIPALITY_CODES = {
+            'CN-BJ': 'Beijing',
+            'CN-TJ': 'Tianjin',
+            'CN-SH': 'Shanghai',
+            'CN-CQ': 'Chongqing'
+        };
+        
         async function reverseGeocode(lat, lon) {
             try {
-                const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&accept-language=en`);
+                const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16&accept-language=en`);
                 if (!resp.ok) throw new Error('Network error');
                 const data = await resp.json();
                 
-                let locationName = '';
                 const addr = data.address || {};
                 
-                // Build a clean short location: city/town + country
-                const place = addr.city || addr.town || addr.village || addr.county || addr.suburb || addr.state || '';
-                const country = addr.country || '';
+                const isoCode = addr['ISO3166-2-lvl4'] || '';
+                const rawState = addr.state || addr.state_district || addr.region || '';
+                const rawCity = addr.city || addr.town || addr.village || addr.county || '';
+                const rawDistrict = addr.suburb || addr.district || addr.neighbourhood || addr.quarter || '';
+                const rawCountry = addr.country || '';
                 
-                if (place && country) {
-                    locationName = `${place}, ${country}`;
-                } else if (place) {
-                    locationName = place;
-                } else if (country) {
-                    locationName = country;
-                }
+                // Check if this is a Chinese municipality (直辖市)
+                // Nominatim returns different structures for each:
+                //   Beijing:   no state, city="Dongcheng District", ISO=CN-BJ
+                //   Shanghai:  state="Shanghai", city="Shanghai", ISO=CN-SH
+                //   Tianjin:   state="Tianjin", city="Heping District", ISO=CN-TJ
+                //   Chongqing: state="Chongqing", city="Yuzhong District", ISO=CN-CQ
+                const municipalityName = MUNICIPALITY_CODES[isoCode];
                 
-                if (locationName) {
-                    document.getElementById('locationInput').value = locationName;
-                    document.getElementById('locationExifInfo').textContent = `GPS: ${lat.toFixed(2)}, ${lon.toFixed(2)} → ${locationName}`;
-                    updateCanvas();
+                if (municipalityName) {
+                    // For municipalities: district=suburb/区, city=直辖市名, province=空, country=国家
+                    // The "city" field from Nominatim is actually the district for BJ/TJ/CQ
+                    let district = rawDistrict;
+                    if (!district && rawCity && rawCity !== municipalityName) {
+                        // rawCity is actually the district name (e.g. "Dongcheng District")
+                        district = rawCity;
+                    }
+                    state.locationComponents = {
+                        district: district || '',
+                        city: municipalityName,
+                        province: '',  // Municipalities have no province level
+                        country: rawCountry
+                    };
                 } else {
-                    document.getElementById('locationInput').value = 'somewhere';
-                    updateCanvas();
+                    // Normal city: district=区, city=市, province=省, country=国家
+                    state.locationComponents = {
+                        district: rawDistrict || '',
+                        city: rawCity || '',
+                        province: rawState || '',
+                        country: rawCountry
+                    };
                 }
+                
+                state.locationManualEdit = false;
+                
+                // Compose display string based on selected levels
+                composeLocationFromLevels();
+                
+                const fullLocation = [
+                    state.locationComponents.district,
+                    state.locationComponents.city,
+                    state.locationComponents.province,
+                    state.locationComponents.country
+                ].filter(Boolean).join(', ');
+                document.getElementById('locationExifInfo').textContent = `GPS: ${lat.toFixed(2)}, ${lon.toFixed(2)} → ${fullLocation}`;
+                
             } catch (e) {
-                // Fallback: keep "somewhere"
                 console.log('Reverse geocode failed:', e);
+                // Reset components on failure
+                state.locationComponents = { district: '', city: '', province: '', country: '' };
+                state.locationManualEdit = false;
                 document.getElementById('locationInput').value = 'somewhere';
                 updateCanvas();
             }
+        }
+        
+        function toggleLocationOptions() {
+            const show = document.getElementById('showLocation').checked;
+            document.getElementById('locationLevelOptions').style.display = show ? 'flex' : 'none';
+            document.getElementById('locationInputGroup').style.display = show ? 'block' : 'none';
+            updateCanvas();
+        }
+        
+        function composeLocationFromLevels() {
+            // Read checkbox states
+            state.locationLevels.district = document.getElementById('showDistrict').checked;
+            state.locationLevels.city = document.getElementById('showCity').checked;
+            state.locationLevels.province = document.getElementById('showProvince').checked;
+            state.locationLevels.country = document.getElementById('showCountry').checked;
+            
+            // If user manually edited, don't override
+            if (state.locationManualEdit) {
+                updateCanvas();
+                return;
+            }
+            
+            // Compose from stored components based on selected levels
+            const parts = [];
+            if (state.locationLevels.district && state.locationComponents.district) {
+                parts.push(state.locationComponents.district);
+            }
+            if (state.locationLevels.city && state.locationComponents.city) {
+                parts.push(state.locationComponents.city);
+            }
+            if (state.locationLevels.province && state.locationComponents.province) {
+                parts.push(state.locationComponents.province);
+            }
+            if (state.locationLevels.country && state.locationComponents.country) {
+                parts.push(state.locationComponents.country);
+            }
+            
+            const locationStr = parts.length > 0 ? parts.join(', ') : 'somewhere';
+            document.getElementById('locationInput').value = locationStr;
+            updateCanvas();
+        }
+        
+        function onLocationManualEdit() {
+            state.locationManualEdit = true;
+            updateCanvas();
         }
 
         function convertDMSToDD(dms, ref) {
