@@ -1216,16 +1216,23 @@
                     <div id="gradientControls" style="display: none;">
                         <div class="form-group">
                             <label class="form-label">渐变类型</label>
-                            <select class="form-select" id="gradientType" onchange="updateBackground()">
+                            <select class="form-select" id="gradientType" onchange="onGradientTypeChange()">
                                 <option value="linear">线性渐变</option>
                                 <option value="radial">径向渐变</option>
                             </select>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="angleGroup">
                             <label class="form-label">方向 (角度)</label>
                             <div class="slider-container">
                                 <input type="range" class="slider" id="gradientAngle" min="0" max="360" value="0" oninput="updateBackground()">
                                 <span class="slider-value" id="angleValue">0°</span>
+                            </div>
+                        </div>
+                        <div class="form-group" id="radiusGroup" style="display: none;">
+                            <label class="form-label">渐变范围</label>
+                            <div class="slider-container">
+                                <input type="range" class="slider" id="gradientRadius" min="10" max="100" value="50" oninput="updateBackground()">
+                                <span class="slider-value" id="radiusValue">50%</span>
                             </div>
                         </div>
                         <div class="form-group">
@@ -1259,6 +1266,8 @@
     <div class="emoji-picker-popup" id="emojiPickerPopup">
         <div class="emoji-categories">
             <button class="emoji-category active" onclick="switchEmojiCategory('smileys', this)">😀</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('people', this)">👋</button>
+            <button class="emoji-category" onclick="switchEmojiCategory('animals', this)">🐶</button>
             <button class="emoji-category" onclick="switchEmojiCategory('nature', this)">🌿</button>
             <button class="emoji-category" onclick="switchEmojiCategory('food', this)">🍎</button>
             <button class="emoji-category" onclick="switchEmojiCategory('travel', this)">✈️</button>
@@ -1303,6 +1312,7 @@
             gradientColors: ['#EAE5D5', '#D4CFC0'],
             gradientType: 'linear',
             gradientAngle: 0,
+            gradientRadius: 50,
             showTime: true,
             showLocation: true,
             showEmoji: true,
@@ -1825,7 +1835,7 @@
                     ? ctx.createLinearGradient(cardRect.x, cardRect.y,
                         cardRect.x + Math.sin(state.gradientAngle * Math.PI / 180) * cardRect.w,
                         cardRect.y + Math.cos(state.gradientAngle * Math.PI / 180) * cardRect.h)
-                    : ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(cardRect.w, cardRect.h));
+                    : ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(cardRect.w, cardRect.h) * state.gradientRadius / 100);
                 
                 gradient.addColorStop(0, state.gradientColors[0]);
                 gradient.addColorStop(1, state.gradientColors[1]);
@@ -2084,6 +2094,13 @@
             updateCanvas();
         }
 
+        function onGradientTypeChange() {
+            var gtype = document.getElementById('gradientType').value;
+            document.getElementById('angleGroup').style.display = (gtype === 'linear') ? '' : 'none';
+            document.getElementById('radiusGroup').style.display = (gtype === 'radial') ? '' : 'none';
+            updateBackground();
+        }
+
         function updateBackground() {
             state.solidColor = document.getElementById('solidColor').value;
             document.getElementById('solidColorHex').value = state.solidColor;
@@ -2092,6 +2109,8 @@
             state.gradientType = document.getElementById('gradientType').value;
             state.gradientAngle = parseInt(document.getElementById('gradientAngle').value);
             document.getElementById('angleValue').textContent = state.gradientAngle + '°';
+            state.gradientRadius = parseInt(document.getElementById('gradientRadius').value);
+            document.getElementById('radiusValue').textContent = state.gradientRadius + '%';
             
             calculateAutoTextColors();
             updateCanvas();
@@ -2187,6 +2206,8 @@
             
             const emojiData = {
                 smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '😤', '😡', '😠', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'],
+                people: ['👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '🫶', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄', '👶', '🧒', '👦', '👧', '🧑', '👱', '👨', '🧔', '👩', '🧓', '👴', '👵', '👲', '👳', '🧕', '👮', '👷', '💂', '🕵️', '👩‍⚕️', '👨‍⚕️', '👩‍🌾', '👨‍🌾', '👩‍🍳', '👨‍🍳', '👩‍🎓', '👨‍🎓', '👩‍🎤', '👨‍🎤', '👩‍🏫', '👨‍🏫', '👩‍🏭', '👨‍🏭', '👩‍💻', '👨‍💻', '👩‍💼', '👨‍💼', '👩‍🔧', '👨‍🔧', '👩‍🔬', '👨‍🔬', '👩‍🎨', '👨‍🎨', '👩‍🚒', '👨‍🚒', '👩‍✈️', '👨‍✈️', '👩‍🚀', '👨‍🚀', '👩‍⚖️', '👨‍⚖️', '🤶', '🎅', '🧙', '🧝', '🧛', '🧟', '🧞', '🧜', '🧚', '👼', '🤰', '🤱', '🙇', '💁', '🙅', '🙆', '🙋', '🧏', '🤦', '🤷', '💆', '💇', '🚶', '🧍', '🧎', '🏃', '💃', '🕺', '🕴️', '👯', '🧖', '🧗', '🏌️', '🏇', '⛷️', '🏂', '🏋️', '🤸', '🤽', '🤾', '🤺', '⛹️', '🧘', '🛀', '🛌', '👭', '👫', '👬', '💏', '💑', '👪', '👨‍👩‍👦', '👨‍👩‍👧', '👨‍👩‍👧‍👦', '👨‍👩‍👦‍👦', '👨‍👩‍👧‍👧', '👨‍👦', '👨‍👧', '👩‍👦', '👩‍👧', '🗣️', '👤', '👥', '🫂'],
+                animals: ['🐶', '🐕', '🐩', '🦮', '🐕‍🦺', '🐱', '🐈', '🐈‍⬛', '🐭', '🐹', '🐰', '🦊', '🐻', '🐻‍❄️', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🦬', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔', '🐾', '🐉', '🐲', '🦧', '🦣', '🦬', '🦫', '🦦', '🦥', '🦨', '🦝', '🦡', '🦃', '🦚', '🦜', '🦢', '🦩', '🦤', '🪶', '🐦‍⬛', '🦆', '🪺', '🐦‍🔥'],
                 nature: ['🌵', '🎄', '🌲', '🌳', '🌴', '🌱', '🌿', '☘️', '🍀', '🎍', '🎋', '🍃', '🍂', '🍁', '🍄', '🌾', '💐', '🌷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝', '🌛', '🌜', '🌚', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌙', '🌎', '🌍', '🌏', '🪐', '💫', '⭐', '🌟', '✨', '⚡', '🔥', '💥', '☄️', '☀️', '🌤️', '⛅', '🌥️', '☁️', '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨', '🌪️', '🌫️', '🌈', '☔', '☂️', '💧', '💦', '🌊'],
                 food: ['🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🍍', '🥝', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🍄', '🥜', '🌰', '🍞', '🥐', '🥖', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🫔', '🥙', '🧆', '🥚', '🍳', '🥘', '🍲', '🫕', '🥣', '🥗', '🍿', '🧈', '🧂', '🥫', '🍱', '🍘', '🍙', '🍚', '🍛', '🍜', '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🍡', '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🫖', '🍵', '🍶', '🍾', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🥤', '🧋', '🧃', '🧉', '🧊'],
                 travel: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🦯', '🦽', '🦼', '🛴', '🚲', '🛵', '🏍️', '🛺', '🚨', '🚔', '🚍', '🚘', '🚖', '🚡', '🚠', '🚟', '🚃', '🚋', '🚞', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚇', '🚊', '🚉', '✈️', '🛫', '🛬', '🛩️', '💺', '🛰️', '🚀', '🛸', '🚁', '🛶', '⛵', '🚤', '🛥️', '🛳️', '⛴️', '🚢', '⚓', '⛽', '🚧', '🚦', '🚥', '🚏', '🗺️', '🗿', '🗽', '🗼', '🏰', '🏯', '🏟️', '🎡', '🎢', '🎠', '⛲', '⛱️', '🏖️', '🏝️', '🏜️', '🌋', '⛰️', '🏔️', '🗻', '🏕️', '⛺', '🏠', '🏡', '🏘️', '🏚️', '🏗️', '🏭', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', '🏩', '💒', '🏛️', '⛪', '🕌', '🛕', '🕍', '🕋', '⛩️', '🛤️', '🛣️', '🗾', '🎑', '🏞️', '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'],
